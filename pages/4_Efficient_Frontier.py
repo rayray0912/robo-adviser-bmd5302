@@ -13,7 +13,7 @@ from core.portfolio_engine import (
 
 MAX_WEIGHT = 1.0
 
-st.title("📈 Efficient Frontier")
+st.title("Efficient Frontier")
 st.caption("Modern Portfolio Theory visualization — see how your portfolio compares.")
 
 # ---- Load data ----

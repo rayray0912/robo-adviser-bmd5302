@@ -11,7 +11,7 @@ from core.portfolio_engine import optimal_portfolio
 
 MAX_WEIGHT = 1.0  # No cap (aligned with teammate's Excel implementation)
 
-st.title("💼 Your Recommended Portfolio")
+st.title("Your Recommended Portfolio")
 
 # ---- Guard ----
 if not st.session_state.get("questionnaire_done"):
@@ -55,7 +55,7 @@ ann_sharpe = ann_return / ann_volatility if ann_volatility > 0 else 0
 ann_utility = ann_return - 0.5 * A * ann_volatility ** 2
 
 # ---- Key metrics ----
-st.subheader("📊 Portfolio Metrics (Annualized)")
+st.subheader("Portfolio Metrics (Annualized)")
 c1, c2, c3, c4 = st.columns(4)
 c1.metric("Expected Return", f"{ann_return*100:.2f}%",
           help="Annualized expected return = monthly return × 12")
@@ -69,7 +69,7 @@ c4.metric("Utility U", f"{ann_utility:.4f}",
 st.divider()
 
 # ---- Asset allocation ----
-st.subheader("🥧 Asset Allocation")
+st.subheader("Asset Allocation")
 
 df = fund_info.copy()
 df["weight"] = weights
@@ -118,7 +118,7 @@ with col_table:
 st.divider()
 
 # ---- Investment calculator ----
-st.subheader("💰 Investment Calculator")
+st.subheader("Investment Calculator")
 
 col_input, col_summary = st.columns([1, 2])
 with col_input:

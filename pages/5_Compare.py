@@ -14,16 +14,16 @@ from core.portfolio_engine import optimal_portfolio
 # Aligned with teammate's Excel: 5 representative risk levels
 A_LEVELS = [1, 2, 4, 6, 8]
 A_LABELS = {
-    1: "🚀 Aggressive (A=1)",
-    2: "📈 Growth (A=2)",
-    4: "⚖️ Balanced (A=4)",
-    6: "🛡️ Mod. Conservative (A=6)",
-    8: "🧊 Conservative (A=8)",
+    1: "Aggressive (A=1)",
+    2: "Growth (A=2)",
+    4: "Balanced (A=4)",
+    6: "Mod. Conservative (A=6)",
+    8: "Conservative (A=8)",
 }
 # No concentration cap (aligned with teammate's Excel)
 MAX_WEIGHT = 1.0
 
-st.title("🔄 Compare Risk Profiles")
+st.title("Compare Risk Profiles")
 st.caption("See how your recommended portfolio changes across risk aversion levels.")
 
 # ---- Load data ----
@@ -58,7 +58,7 @@ if user_A:
 st.divider()
 
 # ---- Section 1: 5 pie charts side by side ----
-st.subheader("🥧 Portfolio Allocation Across Risk Levels")
+st.subheader("Portfolio Allocation Across Risk Levels")
 
 # 10 fund colors
 FUND_COLORS = [
@@ -120,7 +120,7 @@ st.plotly_chart(fig_pies, use_container_width=True)
 st.divider()
 
 # ---- Section 2: Risk-Return metrics line chart ----
-st.subheader("📈 Risk-Return Profile Across A")
+st.subheader("Risk-Return Profile Across A")
 
 metrics_df = pd.DataFrame([
     {
@@ -191,7 +191,7 @@ if user_A:
 st.divider()
 
 # ---- Section 3: Weight heatmap ----
-st.subheader("🔥 Weight Distribution Heatmap")
+st.subheader("Weight Distribution Heatmap")
 
 # Build weight matrix: rows = funds, cols = A values
 weight_matrix = np.array([results[A]["weights"] for A in A_LEVELS]).T  # 10 x 5
@@ -227,7 +227,7 @@ st.caption(
 st.divider()
 
 # ---- Section 4: Numerical table ----
-with st.expander("📊 Detailed Numerical Comparison"):
+with st.expander("Detailed Numerical Comparison"):
     display_df = metrics_df.copy()
     display_df["Expected Return (ann.)"] = display_df["Expected Return (ann.)"].apply(
         lambda v: f"{v:.2f}%")
@@ -245,7 +245,7 @@ with st.expander("📊 Detailed Numerical Comparison"):
 st.divider()
 
 # ---- Interpretation box ----
-st.subheader("🔑 Key Observations")
+st.subheader("Key Observations")
 col_a, col_b, col_c = st.columns(3)
 
 with col_a:

@@ -89,7 +89,7 @@ st.plotly_chart(fig_gauge, use_container_width=True)
 st.divider()
 
 # ---- 4-dimension radar chart ----
-st.subheader("🕸 Your Risk Profile Across 4 Dimensions")
+st.subheader("Your Risk Profile Across 4 Dimensions")
 
 MAX_SCORES = {
     "Capacity": 4 * 4,

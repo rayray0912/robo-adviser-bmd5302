@@ -8,7 +8,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 import streamlit as st
 from core.questionnaire import QUESTIONS, compute_risk_aversion
 
-st.title("📝 Risk Assessment")
+st.title("Risk Assessment")
 st.caption(f"Answer {len(QUESTIONS)} questions to determine your risk aversion (A).")
 
 # ---- Render form ----
@@ -42,12 +42,12 @@ if submitted:
     st.session_state.total_score = result["total_score"]
 
     # 展示结果
-    st.success(f"✅ Your risk aversion coefficient: **A = {result['A']}**")
-    st.info(f"🏷️ Risk Tier: **{result['risk_tier']}**")
+    st.success(f"Your risk aversion coefficient: **A = {result['A']}**")
+    st.info(f"Risk Tier: **{result['risk_tier']}**")
 
     # 简单展示各维度得分
     cols = st.columns(4)
     for col, (dim, score) in zip(cols, result["dimension_scores"].items()):
         col.metric(dim, score)
 
-    st.caption("👉 Go to **Your Profile** in the sidebar to see your portfolio.")
+    st.caption("Go to **Your Profile** in the sidebar to see your portfolio.")
