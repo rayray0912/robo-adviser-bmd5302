@@ -230,3 +230,84 @@ if __name__ == "__main__":
         print(f"Dimension scores: {result['dimension_scores']}")
         print(f"Total weighted: {result['total_score']}")
         print(f"A = {result['A']}  →  {result['risk_tier']}")
+        
+# ============================================================================
+# DEMO PROFILES — for quick-load during demo/video recording
+# ============================================================================
+# Each profile is a complete set of answers that yields a specific A value.
+# Append this block to the END of core/questionnaire.py
+
+DEMO_PROFILES = {
+    "Alex": {
+        "label": "Alex",
+        "age": 28,
+        "description": "Software engineer, long horizon, high risk appetite.",
+        "expected_A": 1.5,
+        "expected_tier": "Aggressive",
+        "answers": {
+            "Q1": "Under 30",
+            "Q2": "More than 50%",
+            "Q3": "Yes, more than 12 months",
+            "Q4": "Stable salary plus other passive income",
+            "Q5": "More than 10 years",
+            "Q6": "Not in the foreseeable future",
+            "Q7": "Long-term wealth accumulation / retirement (20+ years)",
+            "Q8": "Buy more — it's a great opportunity",
+            "Q9": "50% chance to gain 30%, 50% chance to lose 10%",
+            "Q10": "Average 12% return, swings of ±25% per year",
+            "Q11": "Confident — long-term strategies have rough patches",
+            "Q12": "Opportunity for higher returns",
+            "Q13": "5+ years of active investing across multiple asset classes",
+            "Q14": "All of: diversification, Sharpe ratio, efficient frontier, rebalancing",
+            "Q15": "Markets reward patient long-term investors despite volatility",
+        },
+    },
+    "Sarah": {
+        "label": "Sarah",
+        "age": 42,
+        "description": "Mid-level manager with family, balancing growth and stability.",
+        "expected_A": 4.3,
+        "expected_tier": "Growth",
+        "answers": {
+            "Q1": "30 to 45",
+            "Q2": "25% to 50%",
+            "Q3": "Yes, 6 to 12 months",
+            "Q4": "Stable salary only",
+            "Q5": "5 to 10 years",
+            "Q6": "In 5+ years for a major purchase",
+            "Q7": "Major future expense in 5-10 years",
+            "Q8": "Hold and wait for recovery",
+            "Q9": "50% chance to gain 20%, 50% chance to lose 5%",
+            "Q10": "Average 8% return, swings of ±15% per year",
+            "Q11": "Slightly concerned but would stay the course",
+            "Q12": "Necessary trade-off for growth",
+            "Q13": "2 to 5 years with stocks or funds",
+            "Q14": "Most of them",
+            "Q15": "Markets generally trend upward but with significant cycles",
+        },
+    },
+    "Mr. Tan": {
+        "label": "Mr. Tan",
+        "age": 60,
+        "description": "Near-retirement, capital preservation priority.",
+        "expected_A": 8.1,
+        "expected_tier": "Conservative",
+        "answers": {
+            "Q1": "Over 60",
+            "Q2": "10% to 25%",
+            "Q3": "Yes, 3 to 6 months",
+            "Q4": "Stable salary only",
+            "Q5": "3 to 5 years",
+            "Q6": "In 2 to 5 years",
+            "Q7": "Capital preservation with modest growth",
+            "Q8": "Sell everything immediately",
+            "Q9": "Guaranteed 2% return with capital protection",
+            "Q10": "Average 3% return, very stable",
+            "Q11": "Anxious and would consider rebalancing",
+            "Q12": "Possibility of losing some money",
+            "Q13": "Less than 2 years, limited products",
+            "Q14": "Only diversification and basic asset allocation",
+            "Q15": "Markets are unpredictable and risky",
+        },
+    },
+}
