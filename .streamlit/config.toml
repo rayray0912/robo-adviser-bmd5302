@@ -1,0 +1,16 @@
+# Robot Adviser — Global theme
+# https://docs.streamlit.io/library/advanced-features/theming
+
+[theme]
+# Primary color (buttons, links, selections)
+primaryColor = "#1D3557"
+
+# Background colors
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F1FAEE"
+
+# Text color
+textColor = "#1D3557"
+
+# Font
+font = "sans serif"
