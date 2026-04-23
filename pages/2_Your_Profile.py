@@ -7,7 +7,7 @@ import streamlit as st
 import plotly.graph_objects as go
 from core.questionnaire import PERSONA_DESCRIPTIONS
 
-st.title("🎯 Your Risk Profile")
+st.title("Your Risk Profile")
 
 # ---- Guard ----
 if not st.session_state.get("questionnaire_done"):
@@ -41,10 +41,10 @@ fig_gauge = go.Figure()
 
 # 4 tier colored bands
 tier_ranges = [
-    ("🚀 Aggressive", 1.5, 3.5, "#E63946"),
-    ("📈 Growth", 3.5, 5.5, "#F4A261"),
-    ("⚖️ Balanced", 5.5, 7.5, "#2A9D8F"),
-    ("🛡️ Conservative", 7.5, 10.0, "#264653"),
+    ("Aggressive", 1.5, 3.5, "#E63946"),
+    ("Growth", 3.5, 5.5, "#F4A261"),
+    ("Balanced", 5.5, 7.5, "#2A9D8F"),
+    ("Conservative", 7.5, 10.0, "#264653"),
 ]
 
 for label, lo, hi, color in tier_ranges:
