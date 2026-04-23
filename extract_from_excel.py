@@ -20,7 +20,7 @@ import pandas as pd
 from pathlib import Path
 
 # ---- File paths ----
-EF_FILE = "EfficientFrontier_Part1.xlsm"
+EF_FILE = "EfficientFrontier_4_.xlsm"
 PRICES_FILE = "Monthly_Prices_61_Months_v2.xlsx"
 DATA_DIR = Path("data")
 DATA_DIR.mkdir(exist_ok=True)

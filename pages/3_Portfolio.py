@@ -9,7 +9,7 @@ import numpy as np
 import plotly.express as px
 from core.portfolio_engine import optimal_portfolio
 
-MAX_WEIGHT = 0.30
+MAX_WEIGHT = 1.0  # No cap (aligned with teammate's Excel implementation)
 
 st.title("💼 Your Recommended Portfolio")
 
@@ -114,10 +114,6 @@ with col_table:
     display_df.columns = ["Fund", "Class", "Region", "Weight"]
     st.dataframe(display_df, use_container_width=True, hide_index=True,
                  height=400)
-
-st.info(f"📌 **Concentration cap**: No single fund exceeds "
-        f"{int(MAX_WEIGHT*100)}% to ensure diversification, "
-        f"consistent with industry robo-advisor practice.")
 
 st.divider()
 

@@ -11,7 +11,7 @@ from core.portfolio_engine import (
     efficient_frontier, gmvp_unconstrained, gmvp_no_short, optimal_portfolio
 )
 
-MAX_WEIGHT = 0.30
+MAX_WEIGHT = 1.0
 
 st.title("📈 Efficient Frontier")
 st.caption("Modern Portfolio Theory visualization — see how your portfolio compares.")
