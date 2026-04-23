@@ -1,0 +1,35 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+*.egg-info/
+.pytest_cache/
+
+# ---- macOS ----
+.DS_Store
+
+# ---- IDE ----
+.vscode/
+.idea/
+*.swp
+
+# ---- Streamlit ----
+.streamlit/secrets.toml
+
+# ---- Large / local-only raw files ----
+# Raw source spreadsheets — data/ CSVs are what the app reads
+*.xlsx
+*.xlsm
+*.xls
+
+# But keep extract_from_excel.py working locally without these
+# If you want to commit them for teammates, comment out the three lines above
+
+# ---- Temporary / local scratchpads ----
+*.log
+*.tmp

@@ -1,0 +1,11 @@
+ticker,name,asset_class,region
+Fund_01,Franklin Technology A Acc SGD-H1,Equity,Global Tech
+Fund_02,Allianz US Equity Cl AT Acc SGD,Equity,US
+Fund_03,BlackRock World Healthscience A2 SGD-H,Equity,Global Healthcare
+Fund_04,abrdn India Opportunities SGD,Equity,India
+Fund_05,Amova Singapore Dividend Equity SGD,Equity,Singapore
+Fund_06,Amova Japan Equity SGD,Equity,Japan
+Fund_07,Allianz Oriental Income Cl AT Acc SGD,Multi-Asset,Asia
+Fund_08,First Sentier Bridge A MDIS SGD,Balanced,Asia
+Fund_09,United SGD Fund Cl A Acc SGD,Bond,SGD
+Fund_10,LionGlobal Short Duration Bond A Acc SGD,Bond,SGD
