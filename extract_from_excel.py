@@ -1,123 +1,113 @@
 """
 extract_from_excel.py
-Extract μ, Σ, and prices from teammates' Excel files into CSVs
-that the Streamlit app can read.
+Extract μ, Σ, prices, and fund info from the all-in-one Excel file.
 
-Place the two Excel files in the same directory, then run:
+Place the Excel file in the same directory, then run:
     python extract_from_excel.py
 
-Outputs to data/ directory:
+Outputs to data/:
     - fund_info.csv
-    - mu.csv               (monthly mean returns, matches Stats sheet)
-    - mu_annualized.csv    (mu × 12, for display)
-    - sigma.csv            (monthly covariance matrix)
-    - sigma_annualized.csv (sigma × 12, for display)
-    - prices.csv           (61 monthly price observations)
-    - returns.csv          (60 monthly simple returns)
+    - mu.csv, mu_annualized.csv
+    - sigma.csv, sigma_annualized.csv
+    - prices.csv, returns.csv
 """
 import openpyxl
 import pandas as pd
 from pathlib import Path
 
-# ---- File paths ----
-EF_FILE = "EfficientFrontier_4_.xlsm"
-PRICES_FILE = "Monthly_Prices_61_Months_v2.xlsx"
+# ---- Config ----
+EF_FILE = "EfficientFrontier_4_.xlsm"   # 👈 updated to latest
 DATA_DIR = Path("data")
 DATA_DIR.mkdir(exist_ok=True)
 
 
-# ---- 1. Extract prices & fund names ----
-wb_p = openpyxl.load_workbook(PRICES_FILE, data_only=True)
-ws_p = wb_p["Monthly Prices"]
+wb = openpyxl.load_workbook(EF_FILE, data_only=True)
 
-# Header row (row 1): ['Date', 'Franklin Technology', ...]
-header = [c.value for c in ws_p[1]]
-fund_names_full = header[1:]  # skip 'Date'
+# ---- 1. Fund names (from Prices sheet row 2, then tickers from row 3) ----
+ws_p = wb["Prices"]
+fund_names_full = [ws_p.cell(row=2, column=c).value for c in range(2, 12)]
+tickers = [ws_p.cell(row=3, column=c).value for c in range(2, 12)]
 
-# Data rows
-prices_data = []
-for row in ws_p.iter_rows(min_row=2, values_only=True):
-    if row[0] is None:
+# ---- 2. Extract prices (rows 4 onwards, column A = month index, B-K = fund prices) ----
+prices_rows = []
+for row_idx in range(4, ws_p.max_row + 1):
+    month_idx = ws_p.cell(row=row_idx, column=1).value
+    if month_idx is None:
         break
-    prices_data.append(row)
+    prices = [ws_p.cell(row=row_idx, column=c).value for c in range(2, 12)]
+    prices_rows.append([month_idx] + prices)
 
-prices_df = pd.DataFrame(prices_data, columns=header)
-prices_df = prices_df.rename(columns={"Date": "date"})
-prices_df["date"] = pd.to_datetime(prices_df["date"])
-prices_df = prices_df.set_index("date")
-
-# Rename columns to Fund_01..Fund_10 to match Stats sheet
-tickers = [f"Fund_{i:02d}" for i in range(1, 11)]
-prices_df.columns = tickers
+prices_df = pd.DataFrame(prices_rows, columns=["month"] + tickers)
+prices_df = prices_df.set_index("month")
 prices_df.to_csv(DATA_DIR / "prices.csv")
 
-# ---- 2. Build fund_info.csv ----
-# Asset class mapping (from README)
-asset_classes = [
-    ("Fund_01", "Franklin Technology A Acc SGD-H1", "Equity", "Global Tech"),
-    ("Fund_02", "Allianz US Equity Cl AT Acc SGD", "Equity", "US"),
-    ("Fund_03", "BlackRock World Healthscience A2 SGD-H", "Equity", "Global Healthcare"),
-    ("Fund_04", "abrdn India Opportunities SGD", "Equity", "India"),
-    ("Fund_05", "Amova Singapore Dividend Equity SGD", "Equity", "Singapore"),
-    ("Fund_06", "Amova Japan Equity SGD", "Equity", "Japan"),
-    ("Fund_07", "Allianz Oriental Income Cl AT Acc SGD", "Multi-Asset", "Asia"),
-    ("Fund_08", "First Sentier Bridge A MDIS SGD", "Balanced", "Asia"),
-    ("Fund_09", "United SGD Fund Cl A Acc SGD", "Bond", "SGD"),
-    ("Fund_10", "LionGlobal Short Duration Bond A Acc SGD", "Bond", "SGD"),
-]
-fund_info = pd.DataFrame(asset_classes,
+# ---- 3. Build fund_info.csv ----
+# Asset class mapping (updated: Fund_06 is now JPM Income, a bond fund)
+asset_class_map = {
+    "Franklin Technology":             ("Equity", "Global Tech"),
+    "Allianz US Equity":               ("Equity", "US"),
+    "BlackRock World Healthscience":   ("Equity", "Global Healthcare"),
+    "abrdn India Opportunities":       ("Equity", "India"),
+    "Amova Singapore Dividend":        ("Equity", "Singapore"),
+    "JPM Income":                      ("Bond", "Global"),
+    "Amova Japan Equity":              ("Equity", "Japan"),
+    "Allianz Oriental Income":         ("Multi-Asset", "Asia"),
+    "First Sentier Bridge":            ("Balanced", "Asia"),
+    "United SGD Fund":                 ("Bond", "SGD"),
+    "LionGlobal Short Duration Bond":  ("Bond", "SGD"),
+}
+
+fund_info_rows = []
+for ticker, name in zip(tickers, fund_names_full):
+    cls, region = asset_class_map.get(name, ("Unknown", "Unknown"))
+    fund_info_rows.append([ticker, name, cls, region])
+
+fund_info = pd.DataFrame(fund_info_rows,
                          columns=["ticker", "name", "asset_class", "region"])
 fund_info.to_csv(DATA_DIR / "fund_info.csv", index=False)
 
 
-# ---- 3. Extract μ and Σ from Stats sheet ----
-wb_ef = openpyxl.load_workbook(EF_FILE, data_only=True)
-ws_s = wb_ef["Stats"]
+# ---- 4. Extract μ and Σ from Stats sheet ----
+ws_s = wb["Stats"]
 
-# μ monthly: rows 4-13, column B (index 2)
-mu_monthly = []
-for row in range(4, 14):
-    mu_monthly.append(ws_s.cell(row=row, column=2).value)
+# μ monthly: rows 4-13, column B
+mu_monthly = [ws_s.cell(row=r, column=2).value for r in range(4, 14)]
 
-# Σ monthly: rows 19-28, columns B-K (2-11)
+# Σ monthly: rows 19-28, columns B-K
 sigma_monthly = []
 for row in range(19, 29):
-    sigma_row = []
-    for col in range(2, 12):
-        sigma_row.append(ws_s.cell(row=row, column=col).value)
+    sigma_row = [ws_s.cell(row=row, column=c).value for c in range(2, 12)]
     sigma_monthly.append(sigma_row)
 
-# Save monthly
 mu_df = pd.DataFrame({"ticker": tickers, "expected_return": mu_monthly})
 mu_df.to_csv(DATA_DIR / "mu.csv", index=False)
 
 sigma_df = pd.DataFrame(sigma_monthly, index=tickers, columns=tickers)
 sigma_df.to_csv(DATA_DIR / "sigma.csv")
 
-# Save annualized (for display)
+# Annualized versions
 mu_ann = mu_df.copy()
 mu_ann["expected_return"] = mu_ann["expected_return"] * 12
 mu_ann.to_csv(DATA_DIR / "mu_annualized.csv", index=False)
 
-sigma_ann = sigma_df * 12
-sigma_ann.to_csv(DATA_DIR / "sigma_annualized.csv")
+(sigma_df * 12).to_csv(DATA_DIR / "sigma_annualized.csv")
 
-
-# ---- 4. Compute monthly returns for backtest ----
+# Returns for backtest
 returns_df = prices_df.pct_change().dropna()
 returns_df.to_csv(DATA_DIR / "returns.csv")
 
 
-# ---- 5. Summary ----
-print("✅ Extracted data to data/:")
-for f in sorted(DATA_DIR.glob("*.csv")):
-    print(f"  - {f.name}")
+# ---- Summary ----
+import numpy as np
+print(f"✅ Extracted from {EF_FILE}")
+print(f"\nFund list:")
+for t, n in zip(tickers, fund_names_full):
+    cls, _ = asset_class_map.get(n, ("?", "?"))
+    print(f"  {t}: {n} [{cls}]")
 
-print("\n📊 Sanity checks:")
-print(f"  Prices shape: {prices_df.shape}  (expected 61 × 10)")
-print(f"  Returns shape: {returns_df.shape}  (expected 60 × 10)")
+print(f"\nSanity checks:")
+print(f"  Prices shape: {prices_df.shape}")
 print(f"  μ (monthly): min={min(mu_monthly):.4f}, max={max(mu_monthly):.4f}")
 print(f"  μ (annualized): min={min(mu_monthly)*12:.4f}, max={max(mu_monthly)*12:.4f}")
-import numpy as np
 eigvals = np.linalg.eigvalsh(np.array(sigma_monthly))
-print(f"  Σ min eigenvalue: {eigvals.min():.6f}  (should be > 0 for PSD)")
+print(f"  Σ min eigenvalue: {eigvals.min():.6f} (should be > 0)")
