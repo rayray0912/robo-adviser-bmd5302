@@ -7,6 +7,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
+import plotly.graph_objects as go
 from core.portfolio_engine import optimal_portfolio
 
 MAX_WEIGHT = 1.0  # No cap (aligned with teammate's Excel implementation)
@@ -141,3 +142,183 @@ with col_summary:
 st.divider()
 st.caption("⚠️ *This is an academic project output. Not financial advice. "
           "Past performance does not guarantee future results.*")
+
+# ============================================================================
+# Historical Performance Section
+# Append this block to the END of pages/3_Portfolio.py
+# ============================================================================
+
+st.divider()
+st.subheader("Historical Performance")
+st.caption("Based on 61 months of actual price data (Apr 2021 – Apr 2026). "
+           "All portfolios start at $10,000 under a buy-and-hold strategy.")
+
+# ---- Load price data (add to existing load_data if preferred, or standalone) ----
+@st.cache_data
+def load_prices():
+    prices = pd.read_csv("data/prices.csv", index_col=0)
+    return prices
+
+prices = load_prices()
+
+# Generate human-readable month labels (Apr 2021 → Apr 2026)
+# Month 0 = April 2021
+month_labels = pd.date_range(start="2021-04-01", periods=len(prices), freq="MS")
+month_str = month_labels.strftime("%b %Y")
+
+# ---- Chart 1: 10 funds normalized price trends ----
+st.markdown("**Individual Fund Performance (Normalized to 100)**")
+
+normalized_prices = prices / prices.iloc[0] * 100
+
+fig_trends = go.Figure()
+for i, col in enumerate(normalized_prices.columns):
+    fund_name = fund_info["name"].iloc[i]
+    fig_trends.add_trace(go.Scatter(
+        x=month_labels,
+        y=normalized_prices[col],
+        mode="lines",
+        name=fund_name,
+        line=dict(color=FUND_COLORS[i], width=2),
+        hovertemplate=f"<b>{fund_name}</b><br>"
+                      "%{x|%b %Y}<br>"
+                      "Value: %{y:.2f}<extra></extra>",
+    ))
+
+# Add a horizontal reference line at 100
+fig_trends.add_hline(y=100, line=dict(color="gray", width=1, dash="dash"),
+                     annotation_text="Start", annotation_position="right")
+
+fig_trends.update_layout(
+    height=450,
+    xaxis=dict(title="Date", showgrid=True, gridcolor="#f0f0f0"),
+    yaxis=dict(title="Normalized Price (Start = 100)",
+               showgrid=True, gridcolor="#f0f0f0"),
+    hovermode="x unified",
+    legend=dict(orientation="v", yanchor="top", y=1, xanchor="left", x=1.02,
+                font=dict(size=10)),
+    margin=dict(t=20, b=40, l=60, r=180),
+    plot_bgcolor="white",
+)
+
+st.plotly_chart(fig_trends, use_container_width=True)
+
+# Summary of best/worst performers
+ending_values = normalized_prices.iloc[-1]
+best_idx = ending_values.idxmax()
+worst_idx = ending_values.idxmin()
+best_name = fund_info["name"].iloc[list(prices.columns).index(best_idx)]
+worst_name = fund_info["name"].iloc[list(prices.columns).index(worst_idx)]
+
+col_insight_1, col_insight_2, col_insight_3 = st.columns(3)
+col_insight_1.metric("Best performer", best_name,
+                     f"+{ending_values.max() - 100:.1f}%")
+col_insight_2.metric("Worst performer", worst_name,
+                     f"{ending_values.min() - 100:.1f}%")
+col_insight_3.metric("Performance spread",
+                     f"{ending_values.max() - ending_values.min():.1f} pts",
+                     help="Difference between best and worst")
+
+st.divider()
+
+# ---- Chart 2: User portfolio backtest vs equal-weight benchmark ----
+st.markdown("**Your Portfolio vs. Equal-Weight Benchmark (Buy & Hold)**")
+
+INITIAL_CAPITAL = 10_000
+
+# User portfolio value over time (buy and hold)
+user_shares = INITIAL_CAPITAL * weights / prices.iloc[0].values
+user_values = (prices.values * user_shares).sum(axis=1)
+user_series = pd.Series(user_values, index=month_labels)
+
+# Equal-weight benchmark
+eq_weights = np.ones(len(weights)) / len(weights)
+eq_shares = INITIAL_CAPITAL * eq_weights / prices.iloc[0].values
+eq_values = (prices.values * eq_shares).sum(axis=1)
+eq_series = pd.Series(eq_values, index=month_labels)
+
+fig_backtest = go.Figure()
+
+fig_backtest.add_trace(go.Scatter(
+    x=month_labels, y=user_series.values,
+    mode="lines", name=f"Your Portfolio (A={A:.2f})",
+    line=dict(color="#1D3557", width=3),
+    hovertemplate="<b>Your Portfolio</b><br>"
+                  "%{x|%b %Y}<br>"
+                  "Value: $%{y:,.0f}<extra></extra>",
+))
+
+fig_backtest.add_trace(go.Scatter(
+    x=month_labels, y=eq_series.values,
+    mode="lines", name="Equal-Weight Benchmark",
+    line=dict(color="#E76F51", width=2, dash="dash"),
+    hovertemplate="<b>Equal-Weight Benchmark</b><br>"
+                  "%{x|%b %Y}<br>"
+                  "Value: $%{y:,.0f}<extra></extra>",
+))
+
+# Horizontal reference line at initial capital
+fig_backtest.add_hline(y=INITIAL_CAPITAL,
+                       line=dict(color="gray", width=1, dash="dot"),
+                       annotation_text=f"${INITIAL_CAPITAL:,}",
+                       annotation_position="right")
+
+fig_backtest.update_layout(
+    height=420,
+    xaxis=dict(title="Date", showgrid=True, gridcolor="#f0f0f0"),
+    yaxis=dict(title="Portfolio Value (SGD)",
+               showgrid=True, gridcolor="#f0f0f0",
+               tickprefix="$", tickformat=","),
+    hovermode="x unified",
+    legend=dict(orientation="h", yanchor="top", y=-0.15,
+                xanchor="center", x=0.5),
+    margin=dict(t=20, b=80, l=80, r=40),
+    plot_bgcolor="white",
+)
+
+st.plotly_chart(fig_backtest, use_container_width=True)
+
+# Performance summary metrics
+user_total_return = (user_series.iloc[-1] / INITIAL_CAPITAL - 1) * 100
+eq_total_return = (eq_series.iloc[-1] / INITIAL_CAPITAL - 1) * 100
+
+# Max drawdown for user portfolio
+running_max = user_series.cummax()
+drawdown = (user_series - running_max) / running_max
+user_max_dd = drawdown.min() * 100
+
+# Same for benchmark
+eq_running_max = eq_series.cummax()
+eq_drawdown = (eq_series - eq_running_max) / eq_running_max
+eq_max_dd = eq_drawdown.min() * 100
+
+col_bt_1, col_bt_2, col_bt_3, col_bt_4 = st.columns(4)
+
+col_bt_1.metric(
+    "Your Ending Value",
+    f"${user_series.iloc[-1]:,.0f}",
+    f"{user_total_return:+.2f}%",
+)
+col_bt_2.metric(
+    "Benchmark Ending Value",
+    f"${eq_series.iloc[-1]:,.0f}",
+    f"{eq_total_return:+.2f}%",
+)
+col_bt_3.metric(
+    "Outperformance",
+    f"{user_total_return - eq_total_return:+.2f} pts",
+    help="Difference in total return vs. equal-weight benchmark",
+)
+col_bt_4.metric(
+    "Your Max Drawdown",
+    f"{user_max_dd:.2f}%",
+    f"vs. {eq_max_dd:.2f}% benchmark",
+    delta_color="inverse",
+    help="Largest peak-to-trough decline over the period",
+)
+
+st.caption(
+    "**Note**: Past performance is historical simulation using actual FSMOne "
+    "fund prices. Buy-and-hold assumes no transaction costs or rebalancing. "
+    "Results do not predict future performance."
+)
