@@ -122,7 +122,7 @@ with col_hero_1:
     st.markdown(
         '<div class="hero-subtitle">'
         'An evidence-based robo-adviser built on '
-        '<b>Modern Portfolio Theory</b> — turning a 15-question risk profile '
+        '<b>Modern Portfolio Theory</b> — turning a 10-question risk profile '
         'into your personalized investment portfolio.'
         '</div>',
         unsafe_allow_html=True,
@@ -130,7 +130,7 @@ with col_hero_1:
 
     st.page_link("pages/1_Risk_Assessment.py",
                  label="Start your assessment →",
-                 icon="📝")
+                 icon="")
 
 with col_hero_2:
     st.markdown("&nbsp;")
@@ -138,11 +138,11 @@ with col_hero_2:
     m1.metric("Funds in universe", "10",
               help="Real FSMOne unit trusts spanning equity, bond, "
                    "and multi-asset classes")
-    m2.metric("Questions", "15",
-              help="Across 4 dimensions: Capacity, Horizon, Tolerance, Knowledge")
+    m2.metric("Questions", "10",
+              help="2 blocks: Q1–Q5 (capacity, ×1) and Q6–Q10 (tolerance, ×2)")
     m3, m4 = st.columns(2)
-    m3.metric("Risk profiles", "4 tiers",
-              help="Aggressive / Growth / Balanced / Conservative")
+    m3.metric("Risk profiles", "5 tiers",
+              help="R1 Conservative / R2 Mod. Conservative / R3 Balanced / R4 Growth / R5 Aggressive")
     m4.metric("Time needed", "~3 min", help="End-to-end walkthrough")
 
 st.divider()
@@ -162,8 +162,9 @@ with col_s1:
         <div class="step-number">1</div>
         <div class="step-title">Assess your risk</div>
         <div class="step-desc">
-            Answer 15 carefully designed questions across 4 dimensions
-            to quantify your risk aversion coefficient A ∈ [1.5, 10].
+            Answer 10 carefully designed questions to be classified into
+            one of five risk tiers (R1 Conservative through R5 Aggressive),
+            mapped to a discrete risk aversion A ∈ {1, 2, 4, 6, 8}.
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -214,11 +215,11 @@ f1, f2, f3, f4 = st.columns(4)
 with f1:
     st.markdown("""
     <div class="feature-box">
-        <div class="feature-icon">📝</div>
+        <div class="feature-icon">▸</div>
         <div class="feature-title">Risk Assessment</div>
         <div class="feature-desc">
-            15-question survey across Capacity, Horizon, Tolerance,
-            and Knowledge dimensions with weighted scoring.
+            10-question survey with two weighted scoring blocks:
+            Q1–Q5 (objective capacity) and Q6–Q10 (subjective tolerance, ×2).
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -226,11 +227,11 @@ with f1:
 with f2:
     st.markdown("""
     <div class="feature-box">
-        <div class="feature-icon">🎯</div>
+        <div class="feature-icon">▸</div>
         <div class="feature-title">Risk Profile</div>
         <div class="feature-desc">
-            Interactive radar chart, tier classification, and continuous
-            A value from 1.5 (aggressive) to 10 (conservative).
+            Risk-spectrum gauge, tier classification (R1–R5),
+            and discrete A value mapped from your weighted total score.
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -238,7 +239,7 @@ with f2:
 with f3:
     st.markdown("""
     <div class="feature-box">
-        <div class="feature-icon">💼</div>
+        <div class="feature-icon">▸</div>
         <div class="feature-title">Portfolio Builder</div>
         <div class="feature-desc">
             Personalized fund allocation with interactive pie chart
@@ -250,7 +251,7 @@ with f3:
 with f4:
     st.markdown("""
     <div class="feature-box">
-        <div class="feature-icon">📈</div>
+        <div class="feature-icon">▸</div>
         <div class="feature-title">MPT Visualizer</div>
         <div class="feature-desc">
             Efficient frontier with side-by-side comparison
@@ -264,7 +265,7 @@ st.divider()
 # ============================================================================
 # Methodology highlight
 # ============================================================================
-with st.expander("🧠 The science behind the adviser"):
+with st.expander("The science behind the adviser"):
     st.markdown("""
     Our robo-adviser is built on three academically rigorous foundations:
 
@@ -276,10 +277,12 @@ with st.expander("🧠 The science behind the adviser"):
        your personal utility $U = r - \\frac{\\sigma^2 A}{2}$, where $A$
        reflects your individual risk aversion.
 
-    3. **Multi-dimensional risk profiling** — Our questionnaire draws on
-       Grable & Lytton (1999) Risk Tolerance Scale and CFA Institute's risk
-       profiling framework, weighting psychological factors (Kahneman &
-       Tversky, 1979) more heavily than pure knowledge.
+    3. **Two-block risk profiling** — Our 10-question questionnaire splits
+       items into objective capacity (Q1–Q5, weight ×1) and subjective
+       tolerance (Q6–Q10, weight ×2). The doubled weight on tolerance
+       reflects behavioural-finance findings (Kahneman & Tversky, 1979)
+       that psychological response to drawdowns is the strongest predictor
+       of investor behaviour.
 
     **Data**: 10 real FSMOne unit trusts with 5 years of monthly price
     history (Apr 2021 – Apr 2026), covering global equity, Asia-focused
@@ -304,14 +307,14 @@ with cta_col_2:
     )
     st.page_link("pages/1_Risk_Assessment.py",
                  label="Begin Risk Assessment",
-                 icon="📝")
+                 icon="")
 
 # ============================================================================
 # Disclaimer footer
 # ============================================================================
 st.markdown("""
 <div class="disclaimer-box">
-<b>⚠️ Academic project disclaimer:</b> This application was built for
+<b>⚠ Academic project disclaimer:</b> This application was built for
 BMD5302 Financial Modeling (NUS MSc Digital Financial Technology).
 It is not financial advice. Past performance does not guarantee future
 results. Consult a licensed financial advisor before making investment
