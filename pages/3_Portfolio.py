@@ -26,11 +26,11 @@ tier = st.session_state.get("risk_tier", "")
 # ---- Header ----
 col_header_1, col_header_2 = st.columns([1, 2])
 with col_header_1:
-    st.metric("Your Risk Aversion (A)", f"{A:.2f}")
+    st.metric("Your Risk Aversion (A)", f"{A}")
 with col_header_2:
     st.markdown(f"### Risk Profile: {tier}")
     st.caption(f"Portfolio optimized to maximize $U = r - \\frac{{\\sigma^2 A}}{{2}}$ "
-               f"with $A = {A:.2f}$, subject to a {int(MAX_WEIGHT*100)}% concentration cap.")
+               f"with $A = {A}$, subject to a {int(MAX_WEIGHT*100)}% concentration cap.")
 
 st.divider()
 
@@ -65,7 +65,7 @@ c2.metric("Volatility (σ)", f"{ann_volatility*100:.2f}%",
 c3.metric("Sharpe Ratio", f"{ann_sharpe:.2f}",
           help="Return / Volatility (assuming risk-free rate = 0)")
 c4.metric("Utility U", f"{ann_utility:.4f}",
-          help=f"U = r - σ²A/2, with A = {A:.2f}")
+          help=f"U = r - σ²A/2, with A = {A}")
 
 st.divider()
 
@@ -241,7 +241,7 @@ fig_backtest = go.Figure()
 
 fig_backtest.add_trace(go.Scatter(
     x=month_labels, y=user_series.values,
-    mode="lines", name=f"Your Portfolio (A={A:.2f})",
+    mode="lines", name=f"Your Portfolio (A={A})",
     line=dict(color="#1D3557", width=3),
     hovertemplate="<b>Your Portfolio</b><br>"
                   "%{x|%b %Y}<br>"

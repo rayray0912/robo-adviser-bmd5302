@@ -129,8 +129,7 @@ with col_hero_1:
     )
 
     st.page_link("pages/1_Risk_Assessment.py",
-                 label="Start your assessment →",
-                 icon="")
+                 label="Start your assessment →")
 
 with col_hero_2:
     st.markdown("&nbsp;")
@@ -306,8 +305,7 @@ with cta_col_2:
         unsafe_allow_html=True,
     )
     st.page_link("pages/1_Risk_Assessment.py",
-                 label="Begin Risk Assessment",
-                 icon="")
+                 label="Begin Risk Assessment")
 
 # ============================================================================
 # Disclaimer footer
