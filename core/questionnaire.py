@@ -1,313 +1,348 @@
 """
-questionnaire.py
-Risk profiling questionnaire for the Robot Adviser.
+Risk Assessment Questionnaire — aligned with team's Excel implementation.
 
-Design principles:
-- 15 questions across 4 dimensions (Capacity, Horizon, Tolerance, Knowledge)
-- Weighted scoring: Tolerance (1.4) > Capacity = Horizon (1.0) > Knowledge (0.6)
-- Linear mapping to A ∈ [1.5, 10]
-- 4-tier risk classification for portfolio recommendations
+10 questions, 5 risk-level classification (R1-R5), discrete A values.
+Q1-Q5 weighted x1; Q6-Q10 weighted x2 (psychological factors weighted higher).
+
+Score mapping replicates the IF-formulas in EfficientFrontier_4_.xlsm
+Risk_Assessment sheet.
 """
 
-# ============================================================================
-# 1. QUESTIONNAIRE DEFINITION
-# ============================================================================
-# Format: (id, question_text, [(option_text, score)], dimension)
-
+# ---------------------------------------------------------------------------
+# 10 questions
+# ---------------------------------------------------------------------------
 QUESTIONS = [
-    # ---------- Capacity (4 questions, weight 1.0) ----------
-    ("Q1", "What is your current age group?",
-     [("Under 30", 1), ("30 to 45", 2), ("46 to 60", 3), ("Over 60", 4)],
-     "Capacity"),
-    ("Q2", "What percentage of your total savings can you commit to investing?",
-     [("More than 50%", 1), ("25% to 50%", 2),
-      ("10% to 25%", 3), ("Less than 10%", 4)],
-     "Capacity"),
-    ("Q3", "Do you have an emergency fund covering your living expenses?",
-     [("Yes, more than 12 months", 1), ("Yes, 6 to 12 months", 2),
-      ("Yes, 3 to 6 months", 3), ("No, less than 3 months", 4)],
-     "Capacity"),
-    ("Q4", "Which best describes your current income situation?",
-     [("Stable salary plus other passive income", 1),
-      ("Stable salary only", 2),
-      ("Variable income (commission, freelance)", 3),
-      ("No regular income", 4)],
-     "Capacity"),
-
-    # ---------- Horizon (3 questions, weight 1.0) ----------
-    ("Q5", "How long do you plan to keep this money invested?",
-     [("More than 10 years", 1), ("5 to 10 years", 2),
-      ("3 to 5 years", 3), ("Less than 3 years", 4)],
-     "Horizon"),
-    ("Q6", "When might you need to withdraw more than 30% of this investment?",
-     [("Not in the foreseeable future", 1),
-      ("In 5+ years for a major purchase", 2),
-      ("In 2 to 5 years", 3),
-      ("Within the next 2 years", 4)],
-     "Horizon"),
-    ("Q7", "What is the primary goal of this investment?",
-     [("Long-term wealth accumulation / retirement (20+ years)", 1),
-      ("Major future expense in 5-10 years", 2),
-      ("Supplementing income within 5 years", 3),
-      ("Capital preservation with modest growth", 4)],
-     "Horizon"),
-
-    # ---------- Tolerance (5 questions, weight 1.4) ----------
-    ("Q8", "If your portfolio dropped 20% in one year, you would:",
-     [("Buy more — it's a great opportunity", 1),
-      ("Hold and wait for recovery", 2),
-      ("Sell some to reduce further losses", 3),
-      ("Sell everything immediately", 4)],
-     "Tolerance"),
-    ("Q9", "Imagine two investment options. Which would you choose?",
-     [("50% chance to gain 30%, 50% chance to lose 10%", 1),
-      ("50% chance to gain 20%, 50% chance to lose 5%", 2),
-      ("Guaranteed 5% return", 3),
-      ("Guaranteed 2% return with capital protection", 4)],
-     "Tolerance"),
-    ("Q10", "Which return-volatility profile appeals most over 10 years?",
-     [("Average 12% return, swings of ±25% per year", 1),
-      ("Average 8% return, swings of ±15% per year", 2),
-      ("Average 5% return, swings of ±7% per year", 3),
-      ("Average 3% return, very stable", 4)],
-     "Tolerance"),
-    ("Q11", "How would you feel if your portfolio underperformed the market "
-            "by 10% for two consecutive years?",
-     [("Confident — long-term strategies have rough patches", 1),
-      ("Slightly concerned but would stay the course", 2),
-      ("Anxious and would consider rebalancing", 3),
-      ("Would lose faith and exit the strategy", 4)],
-     "Tolerance"),
-    ("Q12", "What does 'risk' mean to you in the context of investing?",
-     [("Opportunity for higher returns", 1),
-      ("Necessary trade-off for growth", 2),
-      ("Possibility of losing some money", 3),
-      ("Possibility of losing everything", 4)],
-     "Tolerance"),
-
-    # ---------- Knowledge (3 questions, weight 0.6) ----------
-    ("Q13", "How would you rate your investment experience?",
-     [("5+ years of active investing across multiple asset classes", 1),
-      ("2 to 5 years with stocks or funds", 2),
-      ("Less than 2 years, limited products", 3),
-      ("No prior investment experience", 4)],
-     "Knowledge"),
-    ("Q14", "Which of these investment concepts are you familiar with?",
-     [("All of: diversification, Sharpe ratio, efficient frontier, rebalancing", 1),
-      ("Most of them", 2),
-      ("Only diversification and basic asset allocation", 3),
-      ("None of these terms", 4)],
-     "Knowledge"),
-    ("Q15", "Which statement about market behavior do you most agree with?",
-     [("Markets reward patient long-term investors despite volatility", 1),
-      ("Markets generally trend upward but with significant cycles", 2),
-      ("Markets are unpredictable and risky", 3),
-      ("Markets are essentially gambling", 4)],
-     "Knowledge"),
+    {
+        "id": "Q1",
+        "block": 1,  # Q1-Q5 weight 1
+        "text": "What is your age?",
+        "options": [
+            ("A", "18 – 30",  5),
+            ("B", "31 – 50",  4),
+            ("C", "51 – 60",  2),
+            ("D", "Above 60", 1),
+        ],
+    },
+    {
+        "id": "Q2",
+        "block": 1,
+        "text": "What is your annual household income (in SGD)?",
+        "options": [
+            ("A", "Below S$60,000",       1),
+            ("B", "S$60,000 – 120,000",   2),
+            ("C", "S$120,000 – 180,000",  3),
+            ("D", "S$180,000 – 300,000",  4),
+            ("E", "Above S$300,000",      5),
+        ],
+    },
+    {
+        "id": "Q3",
+        "block": 1,
+        "text": "What proportion of your annual household income can be used for financial investments?",
+        "options": [
+            ("A", "Less than 10%",  1),
+            ("B", "10% to 25%",     2),
+            ("C", "25% to 50%",     4),
+            ("D", "More than 50%",  5),
+        ],
+    },
+    {
+        "id": "Q4",
+        "block": 1,
+        "text": "Which of the following best describes your current investment portfolio?",
+        "options": [
+            ("A", "Other than bank deposits and government bonds, I rarely invest in other financial products.", 1),
+            ("B", "Most of my investments are in bank deposits and government bonds, with only a small portion in higher-risk products.", 2),
+            ("C", "My assets are fairly diversified across deposits, bonds, fixed-income products, and equities/funds.", 4),
+            ("D", "Most of my investments are in higher-risk products such as equities, funds, and derivatives.", 5),
+        ],
+    },
+    {
+        "id": "Q5",
+        "block": 1,
+        "text": "How many years of experience do you have investing in higher-risk products such as stocks, equity funds, foreign exchange, or derivatives?",
+        "options": [
+            ("A", "No experience",     1),
+            ("B", "Less than 2 years", 2),
+            ("C", "2 to 5 years",      3),
+            ("D", "5 to 8 years",      4),
+            ("E", "More than 8 years", 5),
+        ],
+    },
+    {
+        "id": "Q6",
+        "block": 2,  # Q6-Q10 weight 2
+        "text": "Which of the following best describes your investment attitude?",
+        "options": [
+            ("A", "I am highly risk-averse, do not want any loss of principal, and hope to obtain stable returns above bank deposits.", 1),
+            ("B", "I prefer conservative investments, do not want any loss of principal, and am willing to accept lower returns.", 2),
+            ("C", "I seek higher returns and capital growth, and am willing to bear limited losses.", 4),
+            ("D", "I aim for the highest possible return and am willing to bear relatively large losses.", 5),
+        ],
+    },
+    {
+        "id": "Q7",
+        "block": 2,
+        "text": "In the following situation, which option would you choose?",
+        "options": [
+            ("A", "100% chance of receiving S$5,000 in cash",   1),
+            ("B", "50% chance of receiving S$20,000 in cash",   2),
+            ("C", "25% chance of receiving S$80,000 in cash",   4),
+            ("D", "10% chance of receiving S$200,000 in cash",  5),
+        ],
+    },
+    {
+        "id": "Q8",
+        "block": 2,
+        "text": "What is your planned investment horizon?",
+        "options": [
+            ("A", "Less than 1 year",   1),
+            ("B", "1 – 3 years",        2),
+            ("C", "3 – 5 years",        4),
+            ("D", "More than 5 years",  5),
+        ],
+    },
+    {
+        "id": "Q9",
+        "block": 2,
+        "text": "What is your investment objective?",
+        "options": [
+            ("A", "Capital preservation",   1),
+            ("B", "Steady capital growth",  3),
+            ("C", "Rapid capital growth",   5),
+        ],
+    },
+    {
+        "id": "Q10",
+        "block": 2,
+        "text": "If the value of your investment product fluctuates to the following extent, what is the maximum loss you can accept?",
+        "options": [
+            ("A", "No loss of principal, but returns fall short of expectations",  1),
+            ("B", "A slight loss of principal",                                    2),
+            ("C", "A loss of up to 10% of principal",                              3),
+            ("D", "A loss of 20% – 50% of principal",                              4),
+            ("E", "A loss of more than 50% of principal",                          5),
+        ],
+    },
 ]
 
 
-# ============================================================================
-# 2. SCORING WEIGHTS BY DIMENSION
-# ============================================================================
-DIMENSION_WEIGHTS = {
-    "Capacity":  1.0,   # Objective financial capacity
-    "Horizon":   1.0,   # Time available
-    "Tolerance": 1.4,   # Psychological — most influential per behavioral finance
-    "Knowledge": 0.6,   # Lack of knowledge ≠ should be high A
+# ---------------------------------------------------------------------------
+# Risk-level classification (R1-R5) and A value mapping
+# ---------------------------------------------------------------------------
+# Score range: theoretical min = 15, max = 75
+# Boundaries replicate Excel formula:
+#   IF(N1<=27, R1, IF(N1<=39, R2, IF(N1<=51, R3, IF(N1<=63, R4, R5))))
+RISK_TIERS = [
+    # (label_short, label_full, lo, hi, A_value, color, emoji)
+    ("R1", "Conservative",            15, 27, 8, "#1D3557", "🛡️"),
+    ("R2", "Moderately Conservative", 28, 39, 6, "#457B9D", "⚖️"),
+    ("R3", "Balanced",                40, 51, 4, "#F4A261", "📈"),
+    ("R4", "Growth",                  52, 63, 2, "#E76F51", "📈"),
+    ("R5", "Aggressive",              64, 75, 1, "#9D2226", "🚀"),
+]
+
+
+PERSONA_DESCRIPTIONS = {
+    "R1": (
+        "You are a **Conservative** investor. Capital preservation is your "
+        "primary concern. Your portfolio will be heavily weighted toward "
+        "low-volatility bond funds, with limited equity exposure to provide "
+        "modest growth above inflation."
+    ),
+    "R2": (
+        "You are a **Moderately Conservative** investor. You prefer stability "
+        "but accept some equity exposure for modest growth. Your portfolio "
+        "balances bonds with diversified equity holdings."
+    ),
+    "R3": (
+        "You are a **Balanced** investor. You seek a measured trade-off "
+        "between growth and stability. Your portfolio has roughly equal "
+        "exposure to equities and defensive assets, optimised for long-term "
+        "wealth accumulation with manageable volatility."
+    ),
+    "R4": (
+        "You are a **Growth** investor. You prioritise capital appreciation "
+        "and accept higher volatility for higher expected returns. Your "
+        "portfolio is tilted heavily toward equities with selective "
+        "diversification."
+    ),
+    "R5": (
+        "You are an **Aggressive** investor. You target maximum long-term "
+        "growth and have the capacity to weather significant short-term "
+        "drawdowns. Your portfolio concentrates in high-return equity "
+        "holdings."
+    ),
 }
 
 
-# ============================================================================
-# 3. SCORING FUNCTION
-# ============================================================================
+# ---------------------------------------------------------------------------
+# Scoring function
+# ---------------------------------------------------------------------------
 def compute_risk_aversion(answers: dict) -> dict:
     """
-    Compute risk aversion A from questionnaire answers.
+    Compute total weighted score, R-tier, and A value from answers.
 
     Args:
-        answers: {question_id: option_text} mapping
-                 e.g., {"Q1": "Under 30", "Q2": "More than 50%", ...}
+        answers: dict mapping question id (e.g. "Q1") to the option label
+                 of the chosen answer (e.g. "B"). Either label-only ("B")
+                 or full text matching one of the options is accepted.
 
     Returns:
-        dict with: total_score, dimension_scores, A, risk_tier
+        dict with keys:
+            "total_score"   : int weighted score, range 15-75
+            "block_scores"  : {"Block 1 (Q1-Q5)": int, "Block 2 (Q6-Q10)": int}
+            "R"             : "R1" through "R5"
+            "risk_tier_full": e.g. "Balanced"
+            "risk_tier"     : e.g. "📈 Balanced"  (with emoji, for display)
+            "A"             : int, one of {1, 2, 4, 6, 8}
+            "color"         : hex string for tier display
     """
-    # Build lookup: question_id -> (options_dict, dimension)
-    q_lookup = {qid: (dict(opts), dim) for qid, _, opts, dim in QUESTIONS}
+    block1_total = 0
+    block2_total = 0
 
-    # Compute weighted score per dimension
-    dim_scores = {"Capacity": 0, "Horizon": 0, "Tolerance": 0, "Knowledge": 0}
-    for qid, choice in answers.items():
-        opts, dim = q_lookup[qid]
-        raw_score = opts[choice]
-        dim_scores[dim] += raw_score
+    for q in QUESTIONS:
+        chosen = answers.get(q["id"])
+        if chosen is None:
+            raise ValueError(f"Missing answer for {q['id']}")
 
-    # Apply dimension weights
-    total = sum(dim_scores[d] * DIMENSION_WEIGHTS[d] for d in dim_scores)
+        # Find matching option (accept either short label "A" or full text)
+        score = None
+        for label, text, sc in q["options"]:
+            if chosen == label or chosen == text:
+                score = sc
+                break
+        if score is None:
+            raise ValueError(f"Invalid answer for {q['id']}: {chosen}")
 
-    # Score range derivation:
-    # min raw = 4×1 + 3×1 + 5×1 + 3×1 = 15 (each question = 1)
-    # weighted min = 4×1.0 + 3×1.0 + 5×1.4 + 3×0.6 = 15.8
-    # weighted max = 16×1.0 + 12×1.0 + 20×1.4 + 12×0.6 = 63.2
-    S_MIN, S_MAX = 15.8, 63.2
-    A_MIN, A_MAX = 1.5, 10.0
+        if q["block"] == 1:
+            block1_total += score
+        else:
+            block2_total += score
 
-    A = A_MIN + (total - S_MIN) / (S_MAX - S_MIN) * (A_MAX - A_MIN)
-    A = max(A_MIN, min(A_MAX, A))  # clamp
+    total_score = block1_total + 2 * block2_total
 
-    # Discretize into 4 tiers
-    if A < 3.5:
-        tier = "🚀 Aggressive"
-    elif A < 5.5:
-        tier = "📈 Growth"
-    elif A < 7.5:
-        tier = "⚖️ Balanced"
-    else:
-        tier = "🛡️ Conservative"
+    # Determine R tier
+    R_label = "R5"
+    full_name = "Aggressive"
+    A_value = 1
+    color = "#9D2226"
+    emoji = "🚀"
+
+    for label, full, lo, hi, A, c, em in RISK_TIERS:
+        if total_score <= hi:
+            R_label = label
+            full_name = full
+            A_value = A
+            color = c
+            emoji = em
+            break
 
     return {
-        "total_score": round(total, 2),
-        "dimension_scores": dim_scores,
-        "A": round(A, 2),
-        "risk_tier": tier,
+        "total_score": total_score,
+        "block_scores": {
+            "Block 1 (Q1–Q5)": block1_total,
+            "Block 2 (Q6–Q10, ×2)": 2 * block2_total,
+        },
+        "R": R_label,
+        "risk_tier_full": full_name,
+        "risk_tier": f"{emoji} {full_name}",
+        "A": A_value,
+        "color": color,
     }
 
 
-# ============================================================================
-# 4. PERSONA DESCRIPTIONS (for the result page)
-# ============================================================================
-PERSONA_DESCRIPTIONS = {
-    "🚀 Aggressive": (
-        "You have a strong appetite for risk and a long investment horizon. "
-        "Your portfolio will emphasize equities and growth assets to maximize "
-        "long-term returns, accepting significant short-term volatility."
-    ),
-    "📈 Growth": (
-        "You seek meaningful long-term growth and can tolerate moderate "
-        "fluctuations. Your portfolio balances equities with some defensive "
-        "assets to capture upside while smoothing returns."
-    ),
-    "⚖️ Balanced": (
-        "You value stability but still want meaningful growth. Your portfolio "
-        "weights equities and bonds roughly equally, suitable for medium-term "
-        "goals with moderate volatility."
-    ),
-    "🛡️ Conservative": (
-        "Capital preservation is your priority. Your portfolio emphasizes "
-        "bonds and stable assets, with minimal equity exposure to protect "
-        "against significant drawdowns."
-    ),
-}
-
-
-# ============================================================================
-# 5. SANITY CHECK / DEMO
-# ============================================================================
-if __name__ == "__main__":
-    # Persona 1: Aggressive Alex
-    alex = {
-        "Q1": "Under 30", "Q2": "More than 50%",
-        "Q3": "Yes, 6 to 12 months", "Q4": "Stable salary only",
-        "Q5": "More than 10 years",
-        "Q6": "Not in the foreseeable future",
-        "Q7": "Long-term wealth accumulation / retirement (20+ years)",
-        "Q8": "Buy more — it's a great opportunity",
-        "Q9": "50% chance to gain 30%, 50% chance to lose 10%",
-        "Q10": "Average 12% return, swings of ±25% per year",
-        "Q11": "Confident — long-term strategies have rough patches",
-        "Q12": "Opportunity for higher returns",
-        "Q13": "2 to 5 years with stocks or funds",
-        "Q14": "Most of them",
-        "Q15": "Markets reward patient long-term investors despite volatility",
-    }
-
-    # Persona 3: Conservative Mr. Tan
-    tan = {qid: opts[-1][0] for qid, _, opts, _ in QUESTIONS}  # all worst-case
-
-    for name, ans in [("Alex", alex), ("Mr. Tan", tan)]:
-        result = compute_risk_aversion(ans)
-        print(f"\n--- {name} ---")
-        print(f"Dimension scores: {result['dimension_scores']}")
-        print(f"Total weighted: {result['total_score']}")
-        print(f"A = {result['A']}  →  {result['risk_tier']}")
-        
-# ============================================================================
-# DEMO PROFILES — for quick-load during demo/video recording
-# ============================================================================
-# Each profile is a complete set of answers that yields a specific A value.
-# Append this block to the END of core/questionnaire.py
-
+# ---------------------------------------------------------------------------
+# Demo profiles for video / presentation
+# ---------------------------------------------------------------------------
 DEMO_PROFILES = {
     "Alex": {
         "label": "Alex",
         "age": 28,
         "description": "Software engineer, long horizon, high risk appetite.",
-        "expected_A": 1.5,
+        "expected_R": "R5",
         "expected_tier": "Aggressive",
+        "expected_A": 1,
         "answers": {
-            "Q1": "Under 30",
-            "Q2": "More than 50%",
-            "Q3": "Yes, more than 12 months",
-            "Q4": "Stable salary plus other passive income",
-            "Q5": "More than 10 years",
-            "Q6": "Not in the foreseeable future",
-            "Q7": "Long-term wealth accumulation / retirement (20+ years)",
-            "Q8": "Buy more — it's a great opportunity",
-            "Q9": "50% chance to gain 30%, 50% chance to lose 10%",
-            "Q10": "Average 12% return, swings of ±25% per year",
-            "Q11": "Confident — long-term strategies have rough patches",
-            "Q12": "Opportunity for higher returns",
-            "Q13": "5+ years of active investing across multiple asset classes",
-            "Q14": "All of: diversification, Sharpe ratio, efficient frontier, rebalancing",
-            "Q15": "Markets reward patient long-term investors despite volatility",
+            "Q1": "A",   # 18-30        → 5
+            "Q2": "C",   # 120-180k     → 3
+            "Q3": "D",   # >50%         → 5
+            "Q4": "D",   # high-risk    → 5
+            "Q5": "D",   # 5-8 yrs      → 4
+            "Q6": "D",   # max return   → 5
+            "Q7": "D",   # 10% S$200k   → 5
+            "Q8": "D",   # >5 years     → 5
+            "Q9": "C",   # rapid growth → 5
+            "Q10": "E",  # >50% loss OK → 5
         },
+        # Total = (5+3+5+5+4) + 2*(5+5+5+5+5) = 22 + 50 = 72 → R5 → A=1
     },
     "Sarah": {
         "label": "Sarah",
         "age": 42,
-        "description": "Mid-level manager with family, balancing growth and stability.",
-        "expected_A": 4.3,
-        "expected_tier": "Growth",
+        "description": "Mid-career manager with family, balanced outlook.",
+        "expected_R": "R3",
+        "expected_tier": "Balanced",
+        "expected_A": 4,
         "answers": {
-            "Q1": "30 to 45",
-            "Q2": "25% to 50%",
-            "Q3": "Yes, 6 to 12 months",
-            "Q4": "Stable salary only",
-            "Q5": "5 to 10 years",
-            "Q6": "In 5+ years for a major purchase",
-            "Q7": "Major future expense in 5-10 years",
-            "Q8": "Hold and wait for recovery",
-            "Q9": "50% chance to gain 20%, 50% chance to lose 5%",
-            "Q10": "Average 8% return, swings of ±15% per year",
-            "Q11": "Slightly concerned but would stay the course",
-            "Q12": "Necessary trade-off for growth",
-            "Q13": "2 to 5 years with stocks or funds",
-            "Q14": "Most of them",
-            "Q15": "Markets generally trend upward but with significant cycles",
+            "Q1": "B",   # 31-50      → 4
+            "Q2": "C",   # 120-180k   → 3
+            "Q3": "C",   # 25-50%     → 4
+            "Q4": "C",   # diversified → 4
+            "Q5": "C",   # 2-5 yrs    → 3
+            "Q6": "C",   # higher returns, limited loss → 4
+            "Q7": "B",   # 50% 20k    → 2
+            "Q8": "C",   # 3-5 years  → 4
+            "Q9": "B",   # steady     → 3
+            "Q10": "C",  # up to 10% loss → 3
         },
+        # Total = (4+3+4+4+3) + 2*(4+2+4+3+3) = 18 + 32 = 50 → R3 → A=4
     },
     "Mr. Tan": {
         "label": "Mr. Tan",
         "age": 60,
         "description": "Near-retirement, capital preservation priority.",
-        "expected_A": 8.1,
+        "expected_R": "R1",
         "expected_tier": "Conservative",
+        "expected_A": 8,
         "answers": {
-            "Q1": "Over 60",
-            "Q2": "10% to 25%",
-            "Q3": "Yes, 3 to 6 months",
-            "Q4": "Stable salary only",
-            "Q5": "3 to 5 years",
-            "Q6": "In 2 to 5 years",
-            "Q7": "Capital preservation with modest growth",
-            "Q8": "Sell everything immediately",
-            "Q9": "Guaranteed 2% return with capital protection",
-            "Q10": "Average 3% return, very stable",
-            "Q11": "Anxious and would consider rebalancing",
-            "Q12": "Possibility of losing some money",
-            "Q13": "Less than 2 years, limited products",
-            "Q14": "Only diversification and basic asset allocation",
-            "Q15": "Markets are unpredictable and risky",
+            "Q1": "D",   # >60        → 1
+            "Q2": "B",   # 60-120k    → 2
+            "Q3": "A",   # <10%       → 1
+            "Q4": "A",   # mostly cash/bonds → 1
+            "Q5": "A",   # no exp     → 1
+            "Q6": "A",   # highly risk-averse → 1
+            "Q7": "A",   # 100% 5k    → 1
+            "Q8": "B",   # 1-3 yrs    → 2
+            "Q9": "A",   # preservation → 1
+            "Q10": "B",  # slight loss → 2
         },
+        # Total = (1+2+1+1+1) + 2*(1+1+2+1+2) = 6 + 14 = 20 → R1 → A=8
     },
 }
+
+
+# ---------------------------------------------------------------------------
+# Self-test
+# ---------------------------------------------------------------------------
+if __name__ == "__main__":
+    print("=== Demo profile validation ===\n")
+    for name, profile in DEMO_PROFILES.items():
+        result = compute_risk_aversion(profile["answers"])
+        ok = (result["R"] == profile["expected_R"]
+              and result["A"] == profile["expected_A"])
+        mark = "✓" if ok else "✗"
+        print(f"{mark} {name}: total={result['total_score']}, "
+              f"R={result['R']}, A={result['A']} "
+              f"(expected R={profile['expected_R']}, A={profile['expected_A']})")
+        print(f"   block scores: {result['block_scores']}")
+        print()
+
+    print("\n=== Excel example user (D,B,A,A,A,A,D,D,C,E) ===")
+    excel_test = compute_risk_aversion({
+        "Q1": "D", "Q2": "B", "Q3": "A", "Q4": "A", "Q5": "A",
+        "Q6": "A", "Q7": "D", "Q8": "D", "Q9": "C", "Q10": "E",
+    })
+    print(f"Total = {excel_test['total_score']} (expected 48)")
+    print(f"R = {excel_test['R']} (expected R3)")
+    print(f"A = {excel_test['A']} (expected 4)")

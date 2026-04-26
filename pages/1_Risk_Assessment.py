@@ -1,98 +1,116 @@
-"""Risk Assessment Questionnaire — uses core/questionnaire.py"""
+"""Risk Assessment Questionnaire — 10 questions aligned with Excel implementation."""
 import sys
 from pathlib import Path
-
-# 让 Streamlit 能找到 core/ 模块
 sys.path.append(str(Path(__file__).parent.parent))
 
 import streamlit as st
 from core.questionnaire import QUESTIONS, compute_risk_aversion, DEMO_PROFILES
 
 st.title("Risk Assessment")
-st.caption(f"Answer {len(QUESTIONS)} questions to determine your risk aversion (A).")
+st.caption(
+    f"Answer {len(QUESTIONS)} questions to determine your risk aversion. "
+    "Q1–Q5 measure objective capacity (weight 1); "
+    "Q6–Q10 measure subjective preferences and tolerance (weight 2)."
+)
 
 # ============================================================================
-# DEMO PROFILES QUICK-LOAD
-# Add this block AFTER the st.title(...) line but BEFORE the form.
-# i.e. paste it around line 12-13 of pages/1_Risk_Assessment.py
+# Demo profile quick-load
 # ============================================================================
 with st.expander("Quick Demo Profiles (for presentation)", expanded=False):
     st.caption(
         "Skip the questionnaire and load a representative investor profile. "
-        "Useful for demos — each persona maps to a distinct risk tier."
+        "Each persona maps to a distinct risk tier (R1–R5)."
     )
 
-    demo_col1, demo_col2, demo_col3 = st.columns(3)
-    demo_cols = [demo_col1, demo_col2, demo_col3]
-
-    for col, (key, profile) in zip(demo_cols, DEMO_PROFILES.items()):
+    cols = st.columns(len(DEMO_PROFILES))
+    for col, (key, profile) in zip(cols, DEMO_PROFILES.items()):
         with col:
             st.markdown(f"**{profile['label']}** ({profile['age']} years old)")
-            st.caption(profile['description'])
-            st.caption(f"→ Expected A ≈ {profile['expected_A']} "
-                       f"({profile['expected_tier']})")
+            st.caption(profile["description"])
+            st.caption(
+                f"→ Expected: {profile['expected_R']} ({profile['expected_tier']}), "
+                f"A = {profile['expected_A']}"
+            )
 
             if st.button(f"Load {profile['label']}",
                          key=f"load_{key}",
                          use_container_width=True):
-                # Compute risk aversion from preset answers
                 result = compute_risk_aversion(profile["answers"])
 
-                # Store in session state
                 st.session_state.questionnaire_done = True
                 st.session_state.A = result["A"]
+                st.session_state.R = result["R"]
                 st.session_state.risk_tier = result["risk_tier"]
-                st.session_state.dimension_scores = result["dimension_scores"]
+                st.session_state.risk_tier_full = result["risk_tier_full"]
                 st.session_state.total_score = result["total_score"]
+                st.session_state.block_scores = result["block_scores"]
+                st.session_state.tier_color = result["color"]
                 st.session_state.demo_profile_loaded = profile["label"]
 
                 st.success(
                     f"Loaded **{profile['label']}**: "
-                    f"A = **{result['A']}**, "
-                    f"Tier: **{result['risk_tier']}**"
+                    f"Total score = **{result['total_score']}**, "
+                    f"Tier: **{result['R']} ({result['risk_tier_full']})**, "
+                    f"A = **{result['A']}**"
                 )
                 st.info("Navigate to **Your Profile** in the sidebar "
                         "to see the full analysis.")
 
 st.divider()
 
-# ---- Render form ----
+# ============================================================================
+# Main questionnaire
+# ============================================================================
 with st.form("risk_form"):
-    answers = {}  # {qid: option_text}
+    answers = {}
 
-    for i, (qid, q_text, opts, dim) in enumerate(QUESTIONS):
-        st.markdown(f"**{qid}. {q_text}**")
-        st.caption(f"Dimension: {dim}")
+    for q in QUESTIONS:
+        qid = q["id"]
+        weight_label = "weight ×1" if q["block"] == 1 else "weight ×2"
+        st.markdown(f"**{qid}.** {q['text']}  *<span style=\"color:#888\">({weight_label})</span>*",
+                    unsafe_allow_html=True)
 
-        choice = st.radio(
+        # Build option labels with the letter prefix for readability
+        choices = [f"{label}. {text}" for label, text, _ in q["options"]]
+        chosen = st.radio(
             label=qid,
-            options=[label for label, _ in opts],
+            options=choices,
             key=f"radio_{qid}",
             label_visibility="collapsed",
         )
-        answers[qid] = choice
+        # Extract back the short label (A/B/C/...)
+        answers[qid] = chosen.split(".", 1)[0].strip()
         st.divider()
 
-    submitted = st.form_submit_button("Calculate My Risk Profile", type="primary")
+    submitted = st.form_submit_button(
+        "Calculate My Risk Profile", type="primary"
+    )
 
-# ---- Compute A on submit ----
+# ============================================================================
+# On submit: compute and store
+# ============================================================================
 if submitted:
     result = compute_risk_aversion(answers)
 
-    # 保存到 session_state 给其他页面用
     st.session_state.questionnaire_done = True
     st.session_state.A = result["A"]
+    st.session_state.R = result["R"]
     st.session_state.risk_tier = result["risk_tier"]
-    st.session_state.dimension_scores = result["dimension_scores"]
+    st.session_state.risk_tier_full = result["risk_tier_full"]
     st.session_state.total_score = result["total_score"]
+    st.session_state.block_scores = result["block_scores"]
+    st.session_state.tier_color = result["color"]
 
-    # 展示结果
     st.success(f"Your risk aversion coefficient: **A = {result['A']}**")
-    st.info(f"Risk Tier: **{result['risk_tier']}**")
+    st.info(
+        f"Total weighted score: **{result['total_score']}** / 75  →  "
+        f"Tier: **{result['R']} ({result['risk_tier_full']})**"
+    )
 
-    # 简单展示各维度得分
-    cols = st.columns(4)
-    for col, (dim, score) in zip(cols, result["dimension_scores"].items()):
-        col.metric(dim, score)
+    # Block scores
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Block 1 (Q1–Q5)", result["block_scores"]["Block 1 (Q1–Q5)"])
+    c2.metric("Block 2 (Q6–Q10) × 2", result["block_scores"]["Block 2 (Q6–Q10, ×2)"])
+    c3.metric("Total", result["total_score"])
 
     st.caption("Go to **Your Profile** in the sidebar to see your portfolio.")
